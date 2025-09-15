@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Skin Lesion Detector</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom right, #f0f8ff, #e6ffe6);
+    }
+
+    header {
+      background: linear-gradient(90deg, #1e90ff, #00bfff);
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+      font-size: 28px;
+      font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px;
+    }
+
+    /* Upload Section */
+    .upload-section {
+      width: 40%;
+      padding: 20px;
+      background: #ffffffcc;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .upload-section h2 {
+      margin-bottom: 15px;
+      color: #1e90ff;
+    }
+
+    .upload-box {
+      border: 2px dashed #1e90ff;
+      border-radius: 10px;
+      width: 100%;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #555;
+      transition: 0.3s;
+      background: #f9f9f9;
+    }
+
+    .upload-box.dragover {
+      background-color: #e0f7ff;
+      border-color: #00bfff;
+      color: #00bfff;
+    }
+
+    #preview img {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    #clearBtn {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 16px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    #clearBtn:hover {
+      background: #cc0000;
+    }
+
+    /* Message Section */
+    .message-section {
+      display: none; /* hidden initially */
+      width: 50%;
+      padding: 20px;
+      background: #ffffffcc;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .message-section h2 {
+      margin-bottom: 15px;
+      color: #ff7f50;
+    }
+
+    .random-box {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #ffe6e6;
+      border-left: 6px solid #ff7f50;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .random-box h3 {
+      margin-bottom: 8px;
+      color: #ff4500;
+    }
+
+    .random-box p {
+      font-size: 16px;
+      color: #333;
+    }
+
+    .number-box {
+      padding: 15px;
+      background: #e6f7ff;
+      border-left: 6px solid #1e90ff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .number-box h3 {
+      margin-bottom: 8px;
+      color: #1e90ff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Skin Lesion Analysis
+  </header>
+
+  <div class="container">
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <h2>Upload Your Image</h2>
+      <div class="upload-box" id="dropArea">
+        Drag & Drop Image or Click to Browse
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div id="preview"></div>
+      <button id="clearBtn">Remove Image</button>
+    </div>
+
+    <!-- Message Section -->
+    <div class="message-section">
+      <h2>Results</h2>
+
+      <div class="random-box">
+        <h3>Skin Lesion Type</h3>
+        <p id="message1"></p>
+      </div>
+
+      <div class="random-box">
+        <h3>Symptoms</h3>
+        <p id="message2"></p>
+      </div>
+
+      <div class="random-box">
+        <h3>Suitable Treatment</h3>
+        <p id="message3"></p>
+      </div>
+
+      <div class="random-box">
+        <h3>Severity Level</h3>
+        <p id="message4"></p>
+      </div>
+
+      <div class="number-box">
+        <h3>Accuracy</h3>
+        <p id="randomNumber"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // === IMAGE UPLOAD ===
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const clearBtn = document.getElementById('clearBtn');
+    const messageSection = document.querySelector('.message-section');
+
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      handleFile(file);
+    });
+
+    function handleFile(file) {
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.innerHTML = `<img src="${e.target.result}" alt="Uploaded Image">`;
+          clearBtn.style.display = "inline-block";
+
+          // Show results and generate random outputs
+          messageSection.style.display = "block";
+          showRandomMessage(messages1, "message1");
+          showMultipleRandomMessages(messages2, "message2");
+          showRandomMessage(messages3, "message3");
+          showRandomMessage(messages4, "message4");
+          showRandomNumber(60, 90);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert("Please upload a valid image file.");
+      }
+    }
+
+    clearBtn.addEventListener('click', () => {
+      preview.innerHTML = "";
+      fileInput.value = "";
+      clearBtn.style.display = "none";
+      messageSection.style.display = "none"; // hide results again
+    });
+
+    // === RANDOM MESSAGES + NUMBER ===
+    const messages1 = ["Actinic Keratosis", "Warts", "Skin tag", "Papule","Melanoma", "Acne", "Pustule", "Nodule", "Macule"];
+    const messages2 = ["itching", "redness", "swelling", "changes in color (red, brown, black)", "pain", "bleeding", "pus", "new or evolving growths", "dry and cracked skin"];
+    const messages3 = ["Topical Medications(Creams, Ointments, Lotions, etc.)", "Oral Medications", "Cryotherapy", "Surgical Removal", "Skin Excision"];
+    const messages4 = ["Low (Not of high concern)", "Medium (Consult specialist if condition worsens)", "High (Consult specialist immediately.)"];
+
+    function showRandomMessage(arr, elementId) {
+      const randomIndex = Math.floor(Math.random() * arr.length);
+      document.getElementById(elementId).textContent = arr[randomIndex];
+    }
+
+    function showMultipleRandomMessages(arr, elementId) {
+      const shuffled = [...arr].sort(() => 0.5 - Math.random());
+      const randomCount = Math.floor(Math.random() * 2) + 2; // 2 or 3
+      const selected = shuffled.slice(0, randomCount);
+      document.getElementById(elementId).innerHTML = "• " + selected.join("<br>• ");
+    }
+
+    function showRandomNumber(min, max) {
+      const num = Math.floor(Math.random() * (max - min + 1)) + min;
+      document.getElementById("randomNumber").textContent = num + "%";
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
